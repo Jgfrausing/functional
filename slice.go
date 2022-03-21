@@ -1,10 +1,29 @@
 package utils
 
 func Contains[T comparable](val T, lst []T) bool {
-	filtered := Filter(lst, func(t T) bool {
+	_, found := First(lst, func(t T) bool {
 		return t == val
 	})
-	return len(filtered) > 0
+	return found
+}
+
+func First[T any](lst []T, fn func(T) bool) (T, bool) {
+	val := Reduce(lst, nil, func(r *T, t T) *T {
+		if r != nil {
+			return r
+		}
+		accept := fn(t)
+		if accept {
+			r = &t
+		}
+		return r
+	})
+	if val == nil {
+		var t T
+		return t, false
+	} else {
+		return *val, true
+	}
 }
 
 func Filter[T any](lst []T, fn func(T) bool) []T {
@@ -19,15 +38,15 @@ func Filter[T any](lst []T, fn func(T) bool) []T {
 }
 
 func Map[T any, R any](lst []T, fn func(T) R) []R {
-	slice := make([]R, 0)
+	slice := make([]R, 0, len(lst))
 	return Reduce(lst, slice, func(r []R, t T) []R {
 		return append(r, fn(t))
 	})
 }
 
 func Reduce[T any, R any](lst []T, d R, fn func(R, T) R) R {
-	val, hasLen := Head(lst)
-	if !hasLen {
+	val, ok := Head(lst)
+	if !ok {
 		return d
 	}
 	r := fn(d, val)
